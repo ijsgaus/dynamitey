@@ -63,11 +63,8 @@ namespace Dynamitey.Internal.Optimization
 
             var type = target as Type ?? target.GetType();
 
-            return type.IsNotPublic
-                   && Attribute.IsDefined(
-                       type,
-                       typeof(CompilerGeneratedAttribute),
-                       false);
+            return type.GetTypeInfo().IsNotPublic
+                   && type.GetTypeInfo().GetCustomAttribute<CompilerGeneratedAttribute>(false) != null;
         }
 
 
@@ -161,12 +158,12 @@ namespace Dynamitey.Internal.Optimization
 
                     return false;
                 }
-                if (typeof (Delegate).IsAssignableFrom(tType))
+                if (typeof (Delegate).GetTypeInfo().IsAssignableFrom(tType.GetTypeInfo()))
                 {
                     result = new BaseForwarder.AddRemoveMarker();
                 }
 
-                if (tType.IsValueType)
+                if (tType.GetTypeInfo().IsValueType)
                 {
                     result = Dynamic.InvokeConstructor(tType);
                 }

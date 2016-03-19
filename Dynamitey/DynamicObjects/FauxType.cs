@@ -99,7 +99,15 @@ namespace Dynamitey.DynamicObjects
         /// <returns></returns>
         public override IEnumerable<MemberInfo> GetMember(string binderName)
         {
-            return TargetType.GetMember(binderName);
+            var memberList = new List<MemberInfo>();
+            if(TargetType.GetRuntimeEvent(binderName) != null)
+                memberList.Add(TargetType.GetRuntimeEvent(binderName));
+            if (TargetType.GetRuntimeField(binderName) != null)
+                memberList.Add(TargetType.GetRuntimeField(binderName));
+            if (TargetType.GetRuntimeProperty(binderName) != null)
+                memberList.Add(TargetType.GetRuntimeProperty(binderName));
+            memberList.AddRange(TargetType.GetRuntimeMethods().Where(p => p.Name == binderName).Cast<MemberInfo>());
+            return memberList;
         }
 
         /// <summary>
@@ -158,7 +166,7 @@ namespace Dynamitey.DynamicObjects
         /// <returns></returns>
         public Type[] GetInterfaceTypes()
         {
-            return Types.SelectMany(it => it.GetContainedTypes()).Where(it => it.IsInterface).ToArray();
+            return Types.SelectMany(it => it.GetContainedTypes()).Where(it => it.GetTypeInfo().IsInterface).ToArray();
         }
 
         /// <summary>

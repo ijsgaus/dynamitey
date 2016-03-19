@@ -411,7 +411,7 @@ namespace Dynamitey.DynamicObjects
             result = InvokeHelper(binder.CallInfo, args,tBuildType);
             if (TryTypeForName(binder.Name, out tType))
             {
-                if (tType.IsInterface && result != null && !tType.IsAssignableFrom(result.GetType()))
+                if (tType.GetTypeInfo().IsInterface && result != null && !tType.GetTypeInfo().IsAssignableFrom(result.GetType().GetTypeInfo()))
                 {
                    // result = Impromptu.DynamicActLike(result, tType);
                 }

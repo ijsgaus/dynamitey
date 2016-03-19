@@ -77,9 +77,9 @@ namespace Dynamitey.DynamicObjects
             if (!base.TryGetMember(binder, out result))
             {
 
-                var tInterface = CallTarget.GetType().GetInterfaces().Single(it => it.Name == _extendedType.Name);
+                var tInterface = CallTarget.GetType().GetTypeInfo().ImplementedInterfaces.Single(it => it.Name == _extendedType.Name);
                 result = new Invoker(binder.Name,
-                                     tInterface.IsGenericType ? tInterface.GetGenericArguments() : new Type[] {},null, this);
+                                     tInterface.GetTypeInfo().IsGenericType ? tInterface.GetTypeInfo().GenericTypeArguments : new Type[] {},null, this);
             }
             return true;
         }
@@ -125,13 +125,12 @@ namespace Dynamitey.DynamicObjects
                     {
                         var tNewType = tGenInterface;
 
-                        if (tNewType.IsGenericType)
+                        if (tNewType.GetTypeInfo().IsGenericType)
                         {
                             tNewType = tNewType.MakeGenericType(GenericParams);
                         }
 
-                        var members = tNewType.GetMethods(BindingFlags.Instance |
-                                                                                   BindingFlags.Public).Where(
+                        var members = tNewType.GetRuntimeMethods().Where(p => !p.IsStatic && p.IsPublic).Where(
                                                                                        it => it.Name == Name).ToList();
                         foreach (var tMethodInfo in members)
                         {
@@ -165,16 +164,16 @@ namespace Dynamitey.DynamicObjects
 
             private Type ReplaceGenericTypes(Type type)
             {
-                if (type.IsGenericType && type.ContainsGenericParameters)
+                if (type.GetTypeInfo().IsGenericType && type.IsConstructedGenericType)
                 {
-                    var tArgs = type.GetGenericArguments();
+                    var tArgs = type.GenericTypeArguments;
 
                     tArgs = tArgs.Select(ReplaceGenericTypes).ToArray();
 
                     return type.GetGenericTypeDefinition().MakeGenericType(tArgs);
                 }
 
-                if (type.ContainsGenericParameters)
+                if (type.IsConstructedGenericType)
                 {
                     return typeof (object);
                 }
@@ -319,8 +318,8 @@ namespace Dynamitey.DynamicObjects
             var tGenericPossibles = new List<Type[]>();
             if (name.GenericArgs != null && name.GenericArgs.Length > 0)
             {
-                var tInterface = CallTarget.GetType().GetInterfaces().Single(it => it.Name == _extendedType.Name);
-                var tTypeGenerics = (tInterface.IsGenericType ? tInterface.GetGenericArguments()
+                var tInterface = CallTarget.GetType().GetTypeInfo().ImplementedInterfaces.Single(it => it.Name == _extendedType.Name);
+                var tTypeGenerics = (tInterface.GetTypeInfo().IsGenericType ? tInterface.GenericTypeArguments
                                             : new Type[] { }).Concat(name.GenericArgs).ToArray();
 
                 tGenericPossibles.Add(tTypeGenerics);
@@ -359,15 +358,15 @@ namespace Dynamitey.DynamicObjects
             Type tOutType;
             if (TryTypeForName(name.Name, out tOutType))
             {
-                if (tOutType.IsInterface)
+                if (tOutType.GetTypeInfo().IsInterface)
                 {
-                    var tIsGeneric = tOutType.IsGenericType;
-                    if (tOutType.IsGenericType)
+                    var tIsGeneric = tOutType.GetTypeInfo().IsGenericType;
+                    if (tOutType.GetTypeInfo().IsGenericType)
                     {
                         tOutType = tOutType.GetGenericTypeDefinition();
                     }
 
-                    if (InstanceHints.Select(it => tIsGeneric && it.IsGenericType ? it.GetGenericTypeDefinition() : it)
+                    if (InstanceHints.Select(it => tIsGeneric && it.GetTypeInfo().IsGenericType ? it.GetGenericTypeDefinition() : it)
                             .Contains(tOutType))
                     {
                         result = CreateSelf(result, _extendedType, _staticTypes, _instanceHints);
@@ -406,10 +405,10 @@ namespace Dynamitey.DynamicObjects
                 return false;
             }
 
-            bool genericDef = _extendedType.IsGenericTypeDefinition;
+            bool genericDef = _extendedType.GetTypeInfo().IsGenericTypeDefinition;
 
-            return target.GetType().GetInterfaces().Any(
-                it => ((genericDef && it.IsGenericType) ? it.GetGenericTypeDefinition() : it) == _extendedType);
+            return target.GetType().GetTypeInfo().ImplementedInterfaces.Any(
+                it => ((genericDef && it.GetTypeInfo().IsGenericType) ? it.GetGenericTypeDefinition() : it) == _extendedType);
 
         }
 

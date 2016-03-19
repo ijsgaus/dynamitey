@@ -72,7 +72,7 @@ namespace Dynamitey.DynamicObjects
         /// <param name="assembly">The assembly.</param>
         /// <param name="typeName">Name of the type.</param>
         public LateType(Assembly assembly, string typeName)
-            : base(assembly.GetType(typeName, false))
+            : base(assembly.GetType(typeName))
         {
             TypeName = typeName;
 
